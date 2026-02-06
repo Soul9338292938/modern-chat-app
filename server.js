@@ -17,6 +17,23 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+/* ===== AUTO CREATE USERS TABLE ON START ===== */
+
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL
+      );
+    `);
+    console.log("✅ Users table ready");
+  } catch (err) {
+    console.error("❌ Table creation error:", err);
+  }
+})();
+
 /* ================= JWT SECRET ================= */
 
 const JWT_SECRET = "super_secret_key_change_this";
@@ -40,8 +57,9 @@ app.post("/signup", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    if (!username || !password)
+    if (!username || !password) {
       return res.status(400).json({ error: "Missing fields" });
+    }
 
     const hashed = await bcrypt.hash(password, 10);
 
@@ -52,6 +70,7 @@ app.post("/signup", async (req, res) => {
 
     res.json({ success: true, userId: result.rows[0].id });
   } catch (err) {
+    console.error("Signup error:", err);
     res.status(500).json({ error: "Signup failed" });
   }
 });
@@ -67,26 +86,29 @@ app.post("/login", async (req, res) => {
       [username]
     );
 
-    if (result.rows.length === 0)
+    if (result.rows.length === 0) {
       return res.status(401).json({ error: "Invalid username" });
+    }
 
     const user = result.rows[0];
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match)
+    if (!match) {
       return res.status(401).json({ error: "Invalid password" });
+    }
 
     const token = jwt.sign({ id: user.id }, JWT_SECRET, {
       expiresIn: "7d"
     });
 
     res.json({ token });
-  } catch {
+  } catch (err) {
+    console.error("Login error:", err);
     res.status(500).json({ error: "Login failed" });
   }
 });
 
-/* ================= AUTH TEST ================= */
+/* ================= AUTH CHECK ================= */
 
 app.get("/me", async (req, res) => {
   try {
@@ -102,22 +124,24 @@ app.get("/me", async (req, res) => {
     );
 
     res.json(result.rows[0]);
-  } catch {
+  } catch (err) {
     res.status(401).json({ error: "Invalid token" });
   }
 });
 
-/* ================= SOCKET CONNECTION ================= */
+/* ================= SOCKET READY ================= */
 
 io.on("connection", (socket) => {
-  console.log("User connected");
+  console.log("🔌 User connected");
 
   socket.on("disconnect", () => {
-    console.log("User disconnected");
+    console.log("❌ User disconnected");
   });
 });
 
 /* ================= START SERVER ================= */
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log("Server running on port " + PORT));
+server.listen(PORT, () => {
+  console.log("🚀 Server running on port " + PORT);
+});
