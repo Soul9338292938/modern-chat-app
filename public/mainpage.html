@@ -254,6 +254,95 @@ function logout(){
   localStorage.removeItem("token");
   location.href = "/";
 }
+<!-- ===== Bottom Navigation Styles ===== -->
+<style>
+body{
+  margin:0;
+  font-family:system-ui;
+  background:#0b0f14;
+  color:white;
+}
+
+/* ===== Bottom bar container ===== */
+.bottom-bar{
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  height:62px;
+
+  backdrop-filter: blur(18px);
+  background: rgba(10,14,25,0.85);
+
+  border-top:1px solid rgba(255,255,255,0.06);
+  box-shadow:0 -10px 30px rgba(0,0,0,0.6);
+
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+
+  padding:10px 12px;
+  z-index:999;
+}
+
+/* ===== Card-style nav buttons ===== */
+.nav-btn{
+  text-decoration:none;
+  color:#9aa4af;
+
+  font-size:18px;
+  font-weight:600;
+
+  padding:10px 14px;
+  border-radius:14px;
+
+  transition:.25s ease;
+  background: transparent;
+}
+
+/* ===== Tap feel ===== */
+.nav-btn:active{
+  transform:scale(1.1);
+}
+
+/* ===== ACTIVE card ===== */
+.nav-btn.active{
+  color:#7ea6ff;
+
+  background: linear-gradient(
+    145deg,
+    rgba(126,166,255,0.18),
+    rgba(126,166,255,0.05)
+  );
+
+  box-shadow:
+    0 6px 18px rgba(126,166,255,0.25),
+    inset 0 0 0 1px rgba(126,166,255,0.25);
+}
+</style>
+
+<!-- ===== Bottom Navigation HTML ===== -->
+<div class="bottom-bar">
+  <a href="/mainpage.html" class="nav-btn" id="nav-home">🏠</a>
+  <a href="/store.html" class="nav-btn" id="nav-store">🛒</a>
+  <a href="/cart.html" class="nav-btn" id="nav-cart">📦</a>
+  <a href="/chat.html" class="nav-btn" id="nav-chat">💬</a>
+</div>
+
+<!-- ===== Navigation Logic ===== -->
+<script>
+/* ===== Require login ===== */
+const token = localStorage.getItem("token");
+if(!token) location.href = "/";
+
+/* ===== Highlight active tab ===== */
+const path = location.pathname;
+
+if(path.includes("mainpage")) document.getElementById("nav-home")?.classList.add("active");
+if(path.includes("store")) document.getElementById("nav-store")?.classList.add("active");
+if(path.includes("cart")) document.getElementById("nav-cart")?.classList.add("active");
+if(path.includes("chat")) document.getElementById("nav-chat")?.classList.add("active");
+</script>
 </script>
 
 </body>
