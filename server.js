@@ -1,3 +1,6 @@
+// ===== IMPORTS =====
+require("dotenv").config();
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -5,99 +8,114 @@ const cors = require("cors");
 const { Pool } = require("pg");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
 
+// ===== APP SETUP =====
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
+
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static("public")); // serves login/main/store/cart pages
 
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
-
-/* ===== DATABASE ===== */
+// ===== DATABASE =====
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-/* ===== CREATE USERS TABLE ===== */
+// ===== CREATE TABLE ON START =====
 (async () => {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users(
-      id SERIAL PRIMARY KEY,
-      username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL
-    )
-  `);
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL
+      );
+    `);
+
+    console.log("✅ Users table ready");
+  } catch (err) {
+    console.error("❌ DB error:", err.message);
+  }
 })();
 
-/* ===== AUTH HELPERS ===== */
-function auth(req, res, next) {
-  const header = req.headers.authorization;
-  if (!header) return res.sendStatus(401);
-
-  const token = header.split(" ")[1];
-
-  try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
-    next();
-  } catch {
-    res.sendStatus(403);
-  }
-}
-
-/* ===== SIGNUP ===== */
+// ===== SIGNUP =====
 app.post("/signup", async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password)
-    return res.json({ error: "Missing fields" });
-
-  const hash = await bcrypt.hash(password, 10);
-
   try {
+    const { username, password } = req.body;
+
+    if (!username || !password)
+      return res.status(400).json({ error: "Missing fields" });
+
+    if (password.length < 4)
+      return res.status(400).json({ error: "Password too short" });
+
+    const hash = await bcrypt.hash(password, 10);
+
     await pool.query(
-      "INSERT INTO users(username,password) VALUES($1,$2)",
+      "INSERT INTO users (username, password) VALUES ($1, $2)",
       [username, hash]
     );
+
     res.json({ success: true });
-  } catch {
-    res.json({ error: "Username already exists" });
+  } catch (err) {
+    console.error("Signup error:", err.message);
+    res.status(500).json({ error: "Signup failed" });
   }
 });
 
-/* ===== LOGIN ===== */
+// ===== LOGIN =====
 app.post("/login", async (req, res) => {
-  const { username, password } = req.body;
+  try {
+    const { username, password } = req.body;
 
-  const result = await pool.query(
-    "SELECT * FROM users WHERE username=$1",
-    [username]
-  );
+    const result = await pool.query(
+      "SELECT * FROM users WHERE username=$1",
+      [username]
+    );
 
-  if (!result.rows.length)
-    return res.json({ error: "Invalid credentials" });
+    if (result.rows.length === 0)
+      return res.status(400).json({ error: "User not found" });
 
-  const user = result.rows[0];
-  const ok = await bcrypt.compare(password, user.password);
+    const user = result.rows[0];
 
-  if (!ok) return res.json({ error: "Invalid credentials" });
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid)
+      return res.status(400).json({ error: "Wrong password" });
 
-  const token = jwt.sign(
-    { id: user.id, username: user.username },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      "secret_key",
+      { expiresIn: "7d" }
+    );
 
-  res.json({ token });
+    res.json({ success: true, token, username: user.username });
+  } catch (err) {
+    console.error("Login error:", err.message);
+    res.status(500).json({ error: "Login failed" });
+  }
 });
 
-/* ===== CURRENT USER ===== */
-app.get("/me", auth, (req, res) => {
-  res.json(req.user);
+// ===== SOCKET.IO CHAT (next feature ready) =====
+io.on("connection", socket => {
+  console.log("🔌 User connected");
+
+  socket.on("chat message", msg => {
+    io.emit("chat message", msg); // broadcast to everyone
+  });
+
+  socket.on("disconnect", () => {
+    console.log("❌ User disconnected");
+  });
 });
 
-/* ===== START ===== */
+// ===== START SERVER =====
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log("Server running on " + PORT));
+
+server.listen(PORT, () => {
+  console.log("🚀 Server running on port " + PORT);
+});
