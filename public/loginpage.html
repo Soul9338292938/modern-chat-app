@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login • RBLX Market</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:system-ui,-apple-system,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+input{ user-select:text; }
+
+body{
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+
+  background:
+    radial-gradient(circle at 20% 20%, #7c3aed33, transparent 40%),
+    radial-gradient(circle at 80% 30%, #3b82f633, transparent 40%),
+    radial-gradient(circle at 50% 90%, #8b5cf633, transparent 40%),
+    linear-gradient(180deg,#05070f,#02030a);
+}
+
+.card{
+  width:90%;
+  max-width:380px;
+  padding:28px 24px;
+  border-radius:22px;
+
+  backdrop-filter:blur(18px);
+  background:#0f1424cc;
+  border:1px solid #2a3142;
+
+  box-shadow:0 20px 60px #000000aa;
+  text-align:center;
+}
+
+.title{
+  font-size:26px;
+  font-weight:800;
+  margin-bottom:6px;
+  background:linear-gradient(90deg,#8ea2ff,#c084fc);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.subtitle{
+  color:#9aa4af;
+  font-size:14px;
+  margin-bottom:18px;
+}
+
+.input-box{ position:relative; }
+
+input{
+  width:100%;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid #2a3142;
+  background:#0b1020;
+  color:white;
+  font-size:15px;
+  margin-bottom:12px;
+  outline:none;
+}
+
+input:focus{
+  border-color:#7c3aed;
+  box-shadow:0 0 0 2px #7c3aed33;
+}
+
+.toggle-pass{
+  position:absolute;
+  right:12px;
+  top:12px;
+  font-size:13px;
+  color:#9aa4af;
+  cursor:pointer;
+}
+
+.remember{
+  font-size:13px;
+  color:#9aa4af;
+  margin-bottom:14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  justify-content:center;
+}
+
+.remember input{
+  width:16px;
+  height:16px;
+  accent-color:#7c3aed;
+}
+
+.btn{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,#7c3aed,#3b82f6);
+  color:white;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.popup{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  pointer-events:none;
+  transition:.2s;
+}
+
+.popup.show{ opacity:1; pointer-events:auto; }
+
+.popup-box{
+  background:#0f1424;
+  border:1px solid #2a3142;
+  border-radius:20px;
+  padding:26px 22px;
+  text-align:center;
+  width:85%;
+  max-width:340px;
+}
+
+.popup-box h2{ color:#8ea2ff; margin-bottom:8px; }
+.popup-box p{ color:#cbd5ff; margin-bottom:16px; }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <div class="title">RBLX Market</div>
+  <div class="subtitle">Login to continue</div>
+
+  <input id="user" placeholder="Username">
+
+  <div class="input-box">
+    <input id="pass" type="password" placeholder="Password">
+    <span class="toggle-pass" onclick="togglePass()">Show</span>
+  </div>
+
+  <div class="remember">
+    <input type="checkbox" id="remember">
+    Remember me
+  </div>
+
+  <button class="btn" onclick="login()">Login</button>
+
+  <div style="margin-top:14px;font-size:13px;color:#9aa4af;">
+    Don’t have an account?
+    <a href="signup.html" style="color:#8ea2ff;text-decoration:none;font-weight:600;">Sign up</a>
+  </div>
+</div>
+
+<!-- Popup -->
+<div id="popup" class="popup">
+  <div class="popup-box">
+    <h2 id="pt"></h2>
+    <p id="pm"></p>
+    <button class="btn" onclick="closePopup()">OK</button>
+  </div>
+</div>
+
+<script>
+/* remember user */
+const savedUser = localStorage.getItem("rememberUser");
+if(savedUser){
+  user.value = savedUser;
+  remember.checked = true;
+}
+
+/* popup */
+function showPopup(t,m){
+  pt.innerText=t;
+  pm.innerText=m;
+  popup.classList.add("show");
+}
+function closePopup(){
+  popup.classList.remove("show");
+}
+
+/* toggle password */
+function togglePass(){
+  if(pass.type === "password"){
+    pass.type = "text";
+    event.target.innerText = "Hide";
+  }else{
+    pass.type = "password";
+    event.target.innerText = "Show";
+  }
+}
+
+/* LOGIN FUNCTION (CONNECTED TO SERVER) */
+async function login(){
+  const u = user.value.trim();
+  const p = pass.value.trim();
+
+  if(!u || !p){
+    showPopup("Missing fields","Enter username and password.");
+    return;
+  }
+
+  try{
+    const res = await fetch("/login", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ username:u, password:p })
+    });
+
+    const data = await res.json();
+
+    if(!data.success){
+      showPopup("Login failed", data.error || "Invalid credentials");
+      return;
+    }
+
+    /* ✅ correct session keys */
+    localStorage.setItem("rblx_username", data.username);
+    localStorage.setItem("rblx_logged_in", "true");
+
+    if(remember.checked){
+      localStorage.setItem("rememberUser", u);
+    }else{
+      localStorage.removeItem("rememberUser");
+    }
+
+    showPopup("Success","Welcome " + data.username);
+    setTimeout(()=>location.href="mainpage.html",900);
+
+  }catch(err){
+    showPopup("Server error","Please try again.");
+  }
+}
+</script>
+
+</body>
+</html>
