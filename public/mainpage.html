@@ -5,14 +5,7 @@
 <title>RBLX Market</title>
 
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:system-ui,-apple-system,sans-serif;
-  -webkit-tap-highlight-color:transparent;
-  user-select:none;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none;}
 
 body{
   min-height:100vh;
@@ -23,151 +16,33 @@ body{
     linear-gradient(180deg,#05070f,#02030a);
 }
 
-/* ===== Header ===== */
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:18px 20px;
-}
+/* Header */
+.header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;}
+.title{font-size:22px;font-weight:800;background:linear-gradient(90deg,#8ea2ff,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.profile{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#3b82f6);display:flex;align-items:center;justify-content:center;font-weight:800;}
 
-.title{
-  font-size:22px;
-  font-weight:800;
-  background:linear-gradient(90deg,#8ea2ff,#c084fc);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-}
+/* Content */
+.content{padding:22px;padding-bottom:120px;}
+.card{background:#0f1424;border:1px solid #2a3142;border-radius:20px;padding:22px;margin-bottom:18px;}
 
-/* ===== Profile Icon ===== */
-.profile{
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  background:linear-gradient(135deg,#7c3aed,#3b82f6);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:800;
-  font-size:18px;
-  box-shadow:0 8px 20px rgba(124,58,237,.5);
-  cursor:pointer;
-}
-
-/* ===== Content ===== */
-.content{
-  padding:22px;
-  padding-bottom:110px;
-}
-
-.card{
-  background:#0f1424;
-  border:1px solid #2a3142;
-  border-radius:20px;
-  padding:22px;
-  margin-bottom:18px;
-  box-shadow:0 12px 40px rgba(0,0,0,.6);
-}
-
-.card h2{ margin-bottom:8px; }
-.card p{ color:#9aa4af; font-size:14px; }
-
-/* ===== Bottom Nav ===== */
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  background:#0b1020ee;
-  backdrop-filter:blur(18px);
-  border-top:1px solid #2a3142;
-  display:flex;
-  justify-content:space-around;
-  padding:14px 10px;
+/* ===== GLASS NAV ===== */
+.bottom-bar{
+  position:fixed;bottom:0;left:0;width:100%;height:62px;
+  backdrop-filter: blur(18px);
+  background: rgba(10,14,25,0.85);
+  border-top:1px solid rgba(255,255,255,0.06);
+  box-shadow:0 -10px 30px rgba(0,0,0,0.6);
+  display:flex;justify-content:space-around;align-items:center;
 }
 
 .nav-btn{
-  text-decoration:none;
-  color:#9aa4af;
-  font-size:14px;
-  font-weight:700;
-  padding:10px 18px;
-  border-radius:14px;
+  text-decoration:none;color:#9aa4af;font-size:18px;font-weight:600;
+  padding:10px 14px;border-radius:14px;transition:.25s;
 }
 
-.active{
-  color:white;
-  background:linear-gradient(135deg,#7c3aed,#3b82f6);
-}
-
-/* ===== Drawer ===== */
-.overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.55);
-  backdrop-filter:blur(6px);
-  opacity:0;
-  pointer-events:none;
-  transition:.25s;
-}
-
-.drawer{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:-320px;
-  background:#0f1424f5;
-  backdrop-filter:blur(20px);
-  border-top-left-radius:26px;
-  border-top-right-radius:26px;
-  border-top:1px solid #2a3142;
-  padding:24px;
-  transition:.3s cubic-bezier(.2,.8,.2,1);
-}
-
-.overlay.show{ opacity:1; pointer-events:auto; }
-.drawer.show{ bottom:0; }
-
-.handle{
-  width:46px;
-  height:5px;
-  background:#3b4252;
-  border-radius:10px;
-  margin:0 auto 18px;
-}
-
-.user-box{ text-align:center; margin-bottom:20px; }
-
-.avatar{
-  width:64px;
-  height:64px;
-  border-radius:50%;
-  margin:0 auto 10px;
-  background:linear-gradient(135deg,#7c3aed,#3b82f6);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:24px;
-  font-weight:800;
-}
-
-.username{ font-size:16px; font-weight:700; }
-
-.sub{
-  font-size:13px;
-  color:#9aa4af;
-  margin-top:4px;
-  cursor:pointer;
-}
-
-.logout{
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:14px;
-  font-weight:700;
-  color:white;
-  background:linear-gradient(135deg,#ef4444,#dc2626);
+.nav-btn.active{
+  color:#7ea6ff;
+  background:linear-gradient(145deg,rgba(126,166,255,.18),rgba(126,166,255,.05));
 }
 </style>
 </head>
@@ -180,169 +55,30 @@ body{
 </div>
 
 <div class="content">
-  <div class="card">
-    <h2 id="welcome">Welcome</h2>
-    <p>Your premium Roblox development marketplace.</p>
-  </div>
-
-  <div class="card">
-    <h2>🔥 Featured Systems</h2>
-    <p>Professional building, inventory, and combat systems ready to use.</p>
-  </div>
+  <div class="card"><h2 id="welcome">Welcome</h2></div>
 </div>
 
-<div class="bottom-nav">
-  <a class="nav-btn active" href="/mainpage.html">Home</a>
-</div>
-
-<div id="overlay" class="overlay" onclick="closeDrawer()"></div>
-
-<div id="drawer" class="drawer">
-  <div class="handle"></div>
-
-  <div class="user-box">
-    <div id="avatar" class="avatar">U</div>
-    <div id="drawerUser" class="username">Username</div>
-  </div>
-
-  <button class="logout" onclick="logout()">Logout</button>
-</div>
-
-<script>
-const token = localStorage.getItem("token");
-
-/* ===== Redirect if not logged in ===== */
-if(!token){
-  location.href = "/";
-}
-
-/* ===== Fetch real user from backend ===== */
-async function loadUser(){
-  const res = await fetch("/me", {
-    headers:{ "Authorization":"Bearer " + token }
-  });
-
-  if(res.status !== 200){
-    localStorage.removeItem("token");
-    location.href = "/";
-    return;
-  }
-
-  const user = await res.json();
-
-  welcome.innerText = "Welcome, " + user.username;
-  profile.innerText = user.username.charAt(0).toUpperCase();
-  drawerUser.innerText = user.username;
-  avatar.innerText = user.username.charAt(0).toUpperCase();
-}
-
-loadUser();
-
-/* ===== Drawer ===== */
-profile.onclick = () => {
-  drawer.classList.add("show");
-  overlay.classList.add("show");
-};
-
-function closeDrawer(){
-  drawer.classList.remove("show");
-  overlay.classList.remove("show");
-}
-
-/* ===== Logout ===== */
-function logout(){
-  localStorage.removeItem("token");
-  location.href = "/";
-}
-<!-- ===== Bottom Navigation Styles ===== -->
-<style>
-body{
-  margin:0;
-  font-family:system-ui;
-  background:#0b0f14;
-  color:white;
-}
-
-/* ===== Bottom bar container ===== */
-.bottom-bar{
-  position:fixed;
-  bottom:0;
-  left:0;
-  width:100%;
-  height:62px;
-
-  backdrop-filter: blur(18px);
-  background: rgba(10,14,25,0.85);
-
-  border-top:1px solid rgba(255,255,255,0.06);
-  box-shadow:0 -10px 30px rgba(0,0,0,0.6);
-
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-
-  padding:10px 12px;
-  z-index:999;
-}
-
-/* ===== Card-style nav buttons ===== */
-.nav-btn{
-  text-decoration:none;
-  color:#9aa4af;
-
-  font-size:18px;
-  font-weight:600;
-
-  padding:10px 14px;
-  border-radius:14px;
-
-  transition:.25s ease;
-  background: transparent;
-}
-
-/* ===== Tap feel ===== */
-.nav-btn:active{
-  transform:scale(1.1);
-}
-
-/* ===== ACTIVE card ===== */
-.nav-btn.active{
-  color:#7ea6ff;
-
-  background: linear-gradient(
-    145deg,
-    rgba(126,166,255,0.18),
-    rgba(126,166,255,0.05)
-  );
-
-  box-shadow:
-    0 6px 18px rgba(126,166,255,0.25),
-    inset 0 0 0 1px rgba(126,166,255,0.25);
-}
-</style>
-
-<!-- ===== Bottom Navigation HTML ===== -->
+<!-- NAV -->
 <div class="bottom-bar">
   <a href="/mainpage.html" class="nav-btn" id="nav-home">🏠</a>
   <a href="/store.html" class="nav-btn" id="nav-store">🛒</a>
   <a href="/cart.html" class="nav-btn" id="nav-cart">📦</a>
-  <a href="/chat.html" class="nav-btn" id="nav-chat">💬</a>
 </div>
 
-<!-- ===== Navigation Logic ===== -->
 <script>
-/* ===== Require login ===== */
 const token = localStorage.getItem("token");
-if(!token) location.href = "/";
+if(!token) location.href="/";
 
-/* ===== Highlight active tab ===== */
-const path = location.pathname;
+async function loadUser(){
+  const res = await fetch("/me",{headers:{Authorization:"Bearer "+token}});
+  if(res.status!==200){localStorage.removeItem("token");location.href="/";return;}
+  const user = await res.json();
+  welcome.innerText="Welcome, "+user.username;
+  profile.innerText=user.username[0].toUpperCase();
+}
+loadUser();
 
-if(path.includes("mainpage")) document.getElementById("nav-home")?.classList.add("active");
-if(path.includes("store")) document.getElementById("nav-store")?.classList.add("active");
-if(path.includes("cart")) document.getElementById("nav-cart")?.classList.add("active");
-if(path.includes("chat")) document.getElementById("nav-chat")?.classList.add("active");
-</script>
+nav-home.classList.add("active");
 </script>
 
 </body>

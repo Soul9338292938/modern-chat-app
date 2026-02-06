@@ -5,144 +5,99 @@ const cors = require("cors");
 const { Pool } = require("pg");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-/* ================= DATABASE ================= */
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*" } });
 
+/* ===== DATABASE ===== */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-/* ===== AUTO CREATE USERS TABLE ON START ===== */
-
+/* ===== CREATE USERS TABLE ===== */
 (async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL
-      );
-    `);
-    console.log("✅ Users table ready");
-  } catch (err) {
-    console.error("❌ Table creation error:", err);
-  }
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users(
+      id SERIAL PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL
+    )
+  `);
 })();
 
-/* ================= JWT SECRET ================= */
+/* ===== AUTH HELPERS ===== */
+function auth(req, res, next) {
+  const header = req.headers.authorization;
+  if (!header) return res.sendStatus(401);
 
-const JWT_SECRET = "super_secret_key_change_this";
+  const token = header.split(" ")[1];
 
-/* ================= SOCKET ================= */
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    res.sendStatus(403);
+  }
+}
 
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: "*" }
-});
-
-/* ================= TEST ROUTE ================= */
-
-app.get("/", (req, res) => {
-  res.send("Modern Chat Backend Running");
-});
-
-/* ================= SIGNUP ================= */
-
+/* ===== SIGNUP ===== */
 app.post("/signup", async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password)
+    return res.json({ error: "Missing fields" });
+
+  const hash = await bcrypt.hash(password, 10);
+
   try {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ error: "Missing fields" });
-    }
-
-    const hashed = await bcrypt.hash(password, 10);
-
-    const result = await pool.query(
-      "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id",
-      [username, hashed]
+    await pool.query(
+      "INSERT INTO users(username,password) VALUES($1,$2)",
+      [username, hash]
     );
-
-    res.json({ success: true, userId: result.rows[0].id });
-  } catch (err) {
-    console.error("Signup error:", err);
-    res.status(500).json({ error: "Signup failed" });
+    res.json({ success: true });
+  } catch {
+    res.json({ error: "Username already exists" });
   }
 });
 
-/* ================= LOGIN ================= */
-
+/* ===== LOGIN ===== */
 app.post("/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
+  const { username, password } = req.body;
 
-    const result = await pool.query(
-      "SELECT * FROM users WHERE username=$1",
-      [username]
-    );
+  const result = await pool.query(
+    "SELECT * FROM users WHERE username=$1",
+    [username]
+  );
 
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: "Invalid username" });
-    }
+  if (!result.rows.length)
+    return res.json({ error: "Invalid credentials" });
 
-    const user = result.rows[0];
+  const user = result.rows[0];
+  const ok = await bcrypt.compare(password, user.password);
 
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.status(401).json({ error: "Invalid password" });
-    }
+  if (!ok) return res.json({ error: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, {
-      expiresIn: "7d"
-    });
+  const token = jwt.sign(
+    { id: user.id, username: user.username },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 
-    res.json({ token });
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ error: "Login failed" });
-  }
+  res.json({ token });
 });
 
-/* ================= AUTH CHECK ================= */
-
-app.get("/me", async (req, res) => {
-  try {
-    const auth = req.headers.authorization;
-    if (!auth) return res.status(401).json({ error: "No token" });
-
-    const token = auth.split(" ")[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-
-    const result = await pool.query(
-      "SELECT id, username FROM users WHERE id=$1",
-      [decoded.id]
-    );
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(401).json({ error: "Invalid token" });
-  }
+/* ===== CURRENT USER ===== */
+app.get("/me", auth, (req, res) => {
+  res.json(req.user);
 });
 
-/* ================= SOCKET READY ================= */
-
-io.on("connection", (socket) => {
-  console.log("🔌 User connected");
-
-  socket.on("disconnect", () => {
-    console.log("❌ User disconnected");
-  });
-});
-
-/* ================= START SERVER ================= */
-
+/* ===== START ===== */
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log("🚀 Server running on port " + PORT);
-});
+server.listen(PORT, () => console.log("Server running on " + PORT));
