@@ -251,7 +251,7 @@ async function login(){
       localStorage.removeItem("rememberUser");
 
     showPopup("Success","Welcome back, " + u + "!");
-    setTimeout(()=>location.href="/chat.html",900);
+    setTimeout(()=>location.href="/mainpage.html",900);
   }else{
     showPopup("Login failed", data.error || "Unknown error");
   }
